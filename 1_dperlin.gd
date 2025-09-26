@@ -202,6 +202,9 @@ var perlin_section: VBoxContainer
 var graph_section: VBoxContainer
 var debug_labels: Dictionary = {}
 
+# Control hints UI
+var controls_panel: HBoxContainer
+
 func _ready():
 	perlin_noise = PerlinNoise.new(38082, InterpolationType.SMOOTHSTEP)
 	graph = Graph.new(perlin_noise, 100.0, Vector2(100, get_viewport().size.y/2), get_viewport().size)  # 100 pixels = 1 unit
@@ -231,6 +234,26 @@ func _ready():
 	# Create debug UI
 	create_debug_ui()
 	update_debug_ui()
+	
+	# Create control hints UI
+	create_controls_ui()
+
+func _input(event):
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_S:
+				# Regenerate seed and redraw
+				perlin_noise.regenerate_seed()
+				update_debug_ui()
+				queue_redraw()
+			KEY_M:
+				# Switch interpolation mode
+				if perlin_noise.interpolation_type == InterpolationType.LERP:
+					perlin_noise.interpolation_type = InterpolationType.SMOOTHSTEP
+				else:
+					perlin_noise.interpolation_type = InterpolationType.LERP
+				update_debug_ui()
+				queue_redraw()
 
 func _draw():
 	# Draw the graph axes and ticks
@@ -297,6 +320,59 @@ func create_debug_ui():
 	
 	# Add debug panel to scene
 	add_child(debug_panel)
+
+func create_controls_ui():
+	# Create control hints panel at bottom of screen
+	controls_panel = HBoxContainer.new()
+	controls_panel.position = Vector2(20, get_viewport().size.y - 60)
+	controls_panel.size = Vector2(get_viewport().size.x - 40, 40)
+	controls_panel.modulate = Color.WHITE
+	
+	# Create title label
+	var title_label = Label.new()
+	title_label.text = "CONTROLS: "
+	title_label.modulate = Color.YELLOW
+	title_label.add_theme_font_size_override("font_size", 14)
+	controls_panel.add_child(title_label)
+	
+	# Add some spacing
+	var spacer1 = Control.new()
+	spacer1.size = Vector2(20, 1)
+	controls_panel.add_child(spacer1)
+	
+	# Create S key hint
+	var s_label = Label.new()
+	s_label.text = "[S] Regenerate Seed"
+	s_label.modulate = Color.CYAN
+	s_label.add_theme_font_size_override("font_size", 12)
+	controls_panel.add_child(s_label)
+	
+	# Add spacing
+	var spacer2 = Control.new()
+	spacer2.size = Vector2(30, 1)
+	controls_panel.add_child(spacer2)
+	
+	# Create M key hint
+	var m_label = Label.new()
+	m_label.text = "[M] Switch Interpolation Mode"
+	m_label.modulate = Color.CYAN
+	m_label.add_theme_font_size_override("font_size", 12)
+	controls_panel.add_child(m_label)
+	
+	# Add spacing
+	var spacer3 = Control.new()
+	spacer3.size = Vector2(30, 1)
+	controls_panel.add_child(spacer3)
+	
+	# Create zoom hint
+	var zoom_label = Label.new()
+	zoom_label.text = "Zoom Slider (Left Side)"
+	zoom_label.modulate = Color.LIGHT_GRAY
+	zoom_label.add_theme_font_size_override("font_size", 12)
+	controls_panel.add_child(zoom_label)
+	
+	# Add controls panel to scene
+	add_child(controls_panel)
 
 func update_debug_ui():
 	# Update Perlin Noise parameters
