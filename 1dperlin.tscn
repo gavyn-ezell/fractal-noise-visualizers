@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cbox5wgce4gyk"]
 
-[ext_resource type="Script" uid="uid://bgjuit2gpslev" path="res://1_dperlin.gd" id="1_voyr2"]
+[ext_resource type="Script" uid="uid://bgjuit2gpslev" path="res://1DPerlin.gd" id="1_jy07w"]
 
-[node name="PerlinGraph" type="Node2D"]
-script = ExtResource("1_voyr2")
+[node name="1DPerlin" type="Node2D"]
+script = ExtResource("1_jy07w")
