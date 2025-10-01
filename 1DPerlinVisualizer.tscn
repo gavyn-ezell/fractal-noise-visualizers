@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cbox5wgce4gyk"]
+
+[ext_resource type="Script" uid="uid://bgjuit2gpslev" path="res://1DPerlinVisualizer.gd" id="1_ip3aw"]
+
+[node name="1DPerlinVisualizer" type="Node2D"]
+script = ExtResource("1_ip3aw")
