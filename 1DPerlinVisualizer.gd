@@ -1,5 +1,8 @@
 extends Node2D
 
+var DEBUG_FONT_SIZE: int = 36
+var DEBUG_ITEM_FONT_SIZE: int = 24
+
 class Graph:
 	var perlin: PerlinNoise
 	var pixels_per_unit: float
@@ -163,8 +166,14 @@ var fade_controls: Label
 var octaves_label: Label
 var octaves_controls: Label
 
+# Sliders for noise parameters
+var lacunarity_slider: HSlider
+var persistence_slider: HSlider
+var lacunarity_label: Label
+var persistence_label: Label
+
 # Helper function to create labeled control rows
-func create_control_row(text_content: String, control_text: String, text_color: Color = Color.WHITE, control_color: Color = Color.YELLOW, font_size: int = 24) -> HBoxContainer:
+func create_control_row(text_content: String, control_text: String, text_color: Color = Color.WHITE, control_color: Color = Color.YELLOW, font_size: int = DEBUG_ITEM_FONT_SIZE) -> HBoxContainer:
 	var container = HBoxContainer.new()
 	container.add_theme_constant_override("separation", 5)
 
@@ -207,7 +216,7 @@ func _ready():
 		"[R]",
 		Color.WHITE,
 		Color.YELLOW,
-		24
+		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(regenerate_row)
 	regenerate_label = regenerate_row.get_child(0)  # Reference to update later
@@ -218,7 +227,7 @@ func _ready():
 		"[+, -]",
 		Color.WHITE,
 		Color.YELLOW,
-		24
+		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(zoom_row)
 	zoom_label = zoom_row.get_child(0)  # Reference to update later
@@ -230,7 +239,7 @@ func _ready():
 		"[M]",
 		Color.WHITE,
 		Color.YELLOW,
-		24
+		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(fade_row)
 	fade_label = fade_row.get_child(0)  # Reference to update later
@@ -242,11 +251,55 @@ func _ready():
 		"[O]",
 		Color.WHITE,
 		Color.YELLOW,
-		24
+		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(octaves_row)
 	octaves_label = octaves_row.get_child(0)  # Reference to update later
 	octaves_controls = octaves_row.get_child(1)
+
+	# Lacunarity slider row
+	var lacunarity_container = HBoxContainer.new()
+	lacunarity_container.add_theme_constant_override("separation", 10)
+	debug_ui_container.add_child(lacunarity_container)
+
+	lacunarity_label = Label.new()
+	lacunarity_label.text = "Lacunarity: " + str(perlin_noise.lacunarity)
+	lacunarity_label.add_theme_font_size_override("font_size",DEBUG_ITEM_FONT_SIZE)
+	lacunarity_label.add_theme_color_override("font_color", Color.WHITE)
+	lacunarity_container.add_child(lacunarity_label)
+
+	lacunarity_slider = HSlider.new()
+	lacunarity_slider.min_value = 0.5
+	lacunarity_slider.max_value = 2.0
+	lacunarity_slider.step = 0.1
+	lacunarity_slider.value = perlin_noise.lacunarity
+	lacunarity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lacunarity_slider.add_theme_color_override("font_color", Color.WHITE)
+	lacunarity_container.add_child(lacunarity_slider)
+
+	# Persistence slider row
+	var persistence_container = HBoxContainer.new()
+	persistence_container.add_theme_constant_override("separation", 10)
+	debug_ui_container.add_child(persistence_container)
+
+	persistence_label = Label.new()
+	persistence_label.text = "Persistence: " + str(perlin_noise.persistence)
+	persistence_label.add_theme_font_size_override("font_size", DEBUG_ITEM_FONT_SIZE)
+	persistence_label.add_theme_color_override("font_color", Color.WHITE)
+	persistence_container.add_child(persistence_label)
+
+	persistence_slider = HSlider.new()
+	persistence_slider.min_value = 0.0
+	persistence_slider.max_value = 1.0
+	persistence_slider.step = 0.05
+	persistence_slider.value = perlin_noise.persistence
+	persistence_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	persistence_slider.add_theme_color_override("font_color", Color.WHITE)
+	persistence_container.add_child(persistence_slider)
+
+	# Connect slider signals
+	lacunarity_slider.value_changed.connect(_on_lacunarity_changed)
+	persistence_slider.value_changed.connect(_on_persistence_changed)
 
 
 func _input(event):
@@ -284,6 +337,16 @@ func _input(event):
 		print("redrawing")
 		queue_redraw()
 
+func _on_lacunarity_changed(value: float):
+	perlin_noise.lacunarity = value
+	lacunarity_label.text = "Lacunarity: " + str(value)
+	queue_redraw()
+
+func _on_persistence_changed(value: float):
+	perlin_noise.persistence = value
+	persistence_label.text = "Persistence: " + str(value)
+	queue_redraw()
+
 func update_debug_ui():
 	# Update zoom label and controls
 	if zoom_label and zoom_controls:
@@ -293,6 +356,14 @@ func update_debug_ui():
 		fade_label.text = "Fade: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type]
 	if octaves_label and octaves_controls:
 		octaves_label.text = "Octaves: " + str(perlin_noise.octaves)
+
+	if lacunarity_label and lacunarity_slider:
+		lacunarity_label.text = "Lacunarity: " + str(perlin_noise.lacunarity)
+		lacunarity_slider.value = perlin_noise.lacunarity
+
+	if persistence_label and persistence_slider:
+		persistence_label.text = "Persistence: " + str(perlin_noise.persistence)
+		persistence_slider.value = perlin_noise.persistence
 
 func _draw():
 	# Draw the graph axes and ticks
