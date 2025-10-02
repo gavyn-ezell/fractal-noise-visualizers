@@ -46,9 +46,12 @@ class Graph:
 	
 	func draw_ticks(canvas: CanvasItem):
 		var tick_color = Color.WHITE
-		var tick_length = 10.0
+		# Scale tick length and font size based on zoom level
+		var base_tick_length = 10.0
+		var base_font_size = 12
+		var tick_length = base_tick_length * (pixels_per_unit / 100.0)  # Scale with zoom
+		var font_size = max(8, base_font_size * (pixels_per_unit / 100.0))  # Scale with zoom, min 8px
 		var line_width = 1.0
-		var font_size = 12
 		
 		# Calculate how many units fit on screen
 		var units_left = int(graph_origin.x / pixels_per_unit)
@@ -71,11 +74,12 @@ class Graph:
 					line_width
 				)
 				
-				# Draw label
+				# Draw label (scale offset based on font size)
 				var label_text = str(i)
+				var label_offset = 15 + (font_size / 2)  # Scale offset with font size
 				canvas.draw_string(
 					ThemeDB.fallback_font,
-					Vector2(x_pos - 5, graph_origin.y + 25),
+					Vector2(x_pos - 5, graph_origin.y + label_offset),
 					label_text,
 					HORIZONTAL_ALIGNMENT_CENTER,
 					-1,
@@ -98,11 +102,12 @@ class Graph:
 					line_width
 				)
 				
-				# Draw label
+				# Draw label (scale offset based on font size)
 				var label_text = str(i)
+				var label_offset = 5 + (font_size / 2)  # Scale offset with font size
 				canvas.draw_string(
 					ThemeDB.fallback_font,
-					Vector2(graph_origin.x - 25, y_pos + 5),
+					Vector2(graph_origin.x - (15 + font_size), y_pos + label_offset),
 					label_text,
 					HORIZONTAL_ALIGNMENT_CENTER,
 					-1,
@@ -234,11 +239,10 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_M:
-				# Switch interpolation mode
-				if perlin_noise.fade_type == PerlinNoise.FadeType.LERP:
-					perlin_noise.fade_type = PerlinNoise.FadeType.SMOOTHSTEP
-				else:
-					perlin_noise.fade_type = PerlinNoise.FadeType.LERP
+				# circular movement switch between fade types
+				perlin_noise.fade_type = PerlinNoise.FadeType.values()[
+					(PerlinNoise.FadeType.values().find(perlin_noise.fade_type) + 1) % PerlinNoise.FadeType.values().size()
+				]
 				update_debug_ui()
 				print('switched fade type to ' + str(PerlinNoise.FadeType.keys()[perlin_noise.fade_type]))
 			KEY_EQUAL:

@@ -3,7 +3,10 @@ class_name PerlinNoise
 
 enum FadeType {
 	LERP,
-	SMOOTHSTEP
+	SMOOTHSTEP,
+	SMOOTHERSTEP,
+	EASEINOUTEXPO,
+	EASEINOUTCIRC,
 }
 
 var base_permutation = [ 151,160,137,91,90,15,
@@ -46,7 +49,27 @@ func perlin1d(x: float) -> float:
 		FadeType.LERP:
 			pass
 		FadeType.SMOOTHSTEP:
-			xf = xf * xf * xf * (xf * (xf * 6.0 - 15.0) + 10.0)
+			xf = xf * xf * (3.0 - 2.0 * xf);
+		FadeType.SMOOTHERSTEP:
+			xf = xf * xf * xf * (xf * (xf * 6.0 - 15.0) + 10.0);
+		FadeType.EASEINOUTEXPO:
+			var result = 0
+			if xf == 0:
+				result = 0
+			elif xf == 1:
+				result = 1
+			elif xf < 0.5:
+				result = pow(2.0, 20.0 * xf - 10.0) / 2.0
+			else:
+				result = (2.0 - pow(2.0, -20.0 * xf + 10.0)) / 2.0
+			xf = result
+		FadeType.EASEINOUTCIRC:
+			var result = 0
+			if xf < 0.5:
+				result = (1.0 - sqrt(1.0 - pow(2.0 * xf, 2.0))) / 2.0
+			else:
+				result = (sqrt(1.0 - pow(-2.0 * xf + 2.0, 2.0)) + 1.0) / 2.0
+			xf = result
 		_:
 			pass
 	return lerp(_hash1d(xi), _hash1d(xi + 1), xf)
