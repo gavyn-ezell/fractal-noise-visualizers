@@ -160,6 +160,8 @@ var zoom_label: Label
 var zoom_controls: Label
 var fade_label: Label
 var fade_controls: Label
+var octaves_label: Label
+var octaves_controls: Label
 
 # Helper function to create labeled control rows
 func create_control_row(text_content: String, control_text: String, text_color: Color = Color.WHITE, control_color: Color = Color.YELLOW, font_size: int = 24) -> HBoxContainer:
@@ -234,6 +236,18 @@ func _ready():
 	fade_label = fade_row.get_child(0)  # Reference to update later
 	fade_controls = fade_row.get_child(1)
 
+	#octaves row
+	var octaves_row = create_control_row(
+		"Octaves: " + str(perlin_noise.octaves),
+		"[O]",
+		Color.WHITE,
+		Color.YELLOW,
+		24
+	)
+	debug_ui_container.add_child(octaves_row)
+	octaves_label = octaves_row.get_child(0)  # Reference to update later
+	octaves_controls = octaves_row.get_child(1)
+
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
@@ -258,6 +272,13 @@ func _input(event):
 				print('zoomed out to ' + str(graph.pixels_per_unit) + 'px/graph unit')
 			KEY_R:
 				perlin_noise.shuffle_p()
+			KEY_O:
+				#circular movement switch between octaves (1-4)
+				perlin_noise.octaves += 1
+				if perlin_noise.octaves > 4:
+					perlin_noise.octaves = 1
+				update_debug_ui()
+				print('switched octaves to ' + str(perlin_noise.octaves))
 			_:
 				pass
 		print("redrawing")
@@ -270,6 +291,8 @@ func update_debug_ui():
 
 	if fade_label and fade_controls:
 		fade_label.text = "Fade: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type]
+	if octaves_label and octaves_controls:
+		octaves_label.text = "Octaves: " + str(perlin_noise.octaves)
 
 func _draw():
 	# Draw the graph axes and ticks

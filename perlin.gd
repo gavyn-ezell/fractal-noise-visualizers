@@ -24,15 +24,21 @@ var base_permutation = [ 151,160,137,91,90,15,
    138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
    ];
 
+var p: Array[int] 
+var lacunarity: int = 2 #fixed value
+var persistence: float = 0.5 #fixed value
+
 var fade_type: FadeType
 var n: int
-var p: Array[int]
+var octaves: int
 
-func _init(in_fade_type: FadeType = FadeType.LERP, in_n: int = 255) -> void:
+func _init(in_fade_type: FadeType = FadeType.LERP, in_n: int = 255, in_octaves:int = 1) -> void:
 	fade_type = in_fade_type
 	for idx in range(512):
 		p.append(base_permutation[idx % 256])
 	n = in_n
+	octaves = clamp(in_octaves, 1, 4)
+	
 func shuffle_p():
 	p.shuffle()
 
@@ -41,7 +47,7 @@ func _hash1d(x: int) -> float:
 	#should return random value from -1 to 1
 	return lerp(-1.0, 1.0, h / 255.0)
 
-func perlin1d(x: float) -> float:
+func _noise1d(x:float) -> float:
 	var xi = int(floor(x))
 	var xf = x - xi
 
@@ -73,3 +79,11 @@ func perlin1d(x: float) -> float:
 		_:
 			pass
 	return lerp(_hash1d(xi), _hash1d(xi + 1), xf)
+	
+func perlin1d(x: float) -> float:
+	var final_noise = 0
+	for s in range(octaves):
+		#persistence affects amplitude change at each level
+		#lacunarity effects frequency change at each level
+		final_noise += pow(persistence, s) * _noise1d(pow(lacunarity, s) * x)
+	return final_noise
