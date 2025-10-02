@@ -3,7 +3,12 @@ extends Node2D
 var DEBUG_FONT_SIZE: int = 36
 var DEBUG_ITEM_FONT_SIZE: int = 24
 
+
+
 class Graph:
+	var GRAPH_LINE_COLOR: Color = Color("535F6E")
+	var CURVE_COLOR: Color = Color("ff0000")
+	var POINT_COLOR: Color = Color.BLUE
 	var perlin: PerlinNoise
 	var pixels_per_unit: float
 	
@@ -24,18 +29,17 @@ class Graph:
 			var noise_value = perlin.perlin1d(graph_space_pos.x)
 			var pixel_space_pos = _graph_to_pixel_space(Vector2(graph_space_pos.x, noise_value))
 			#draw a red blue dot with y equal to noise value 
-			canvas.draw_circle(pixel_space_pos, 4, Color.BLUE)
+			canvas.draw_circle(pixel_space_pos, 5, POINT_COLOR)
 		
 		
 	func draw_axes(canvas: CanvasItem):
-		var axis_color = Color.WHITE
-		var line_width = 2.0
+		var line_width = 3.0
 		
 		# Draw X-axis (horizontal line through center_y)
 		canvas.draw_line(
 			Vector2(0, graph_origin.y), 
 			Vector2(screen_size.x, graph_origin.y), 
-			axis_color, 
+			GRAPH_LINE_COLOR,
 			line_width
 		)
 		
@@ -43,12 +47,11 @@ class Graph:
 		canvas.draw_line(
 			Vector2(graph_origin.x, 0), 
 			Vector2(graph_origin.x, screen_size.y), 
-			axis_color, 
+			GRAPH_LINE_COLOR,
 			line_width
 		)
 	
 	func draw_ticks(canvas: CanvasItem):
-		var tick_color = Color.WHITE
 		# Scale tick length and font size based on zoom level
 		var base_tick_length = 10.0
 		var base_font_size = 12
@@ -73,7 +76,7 @@ class Graph:
 				canvas.draw_line(
 					Vector2(x_pos, graph_origin.y - tick_length/2), 
 					Vector2(x_pos, graph_origin.y + tick_length/2), 
-					tick_color, 
+					GRAPH_LINE_COLOR, 
 					line_width
 				)
 				
@@ -87,7 +90,7 @@ class Graph:
 					HORIZONTAL_ALIGNMENT_CENTER,
 					-1,
 					font_size,
-					tick_color
+					GRAPH_LINE_COLOR
 				)
 		
 		# Draw Y-axis ticks and labels
@@ -101,7 +104,7 @@ class Graph:
 				canvas.draw_line(
 					Vector2(graph_origin.x - tick_length/2, y_pos), 
 					Vector2(graph_origin.x + tick_length/2, y_pos), 
-					tick_color, 
+					GRAPH_LINE_COLOR, 
 					line_width
 				)
 				
@@ -115,12 +118,11 @@ class Graph:
 					HORIZONTAL_ALIGNMENT_CENTER,
 					-1,
 					font_size,
-					tick_color
+					GRAPH_LINE_COLOR
 				)
 	
 	func draw_noise_graph(canvas: CanvasItem):
-		var line_color = Color.RED
-		var line_width = 2.0
+		var line_width = 3
 		var step_size = 2  # Sample every 2 pixels for smoother lines
 		
 		var points = PackedVector2Array()
@@ -135,7 +137,7 @@ class Graph:
 		
 		# Draw lines connecting the points
 		for i in range(points.size() - 1):
-			canvas.draw_line(points[i], points[i + 1], line_color, line_width)
+			canvas.draw_line(points[i], points[i + 1], CURVE_COLOR, line_width)
 
 	func _pixel_to_graph_space(point: Vector2) -> Vector2:
 		# subtraction AND an sign flip of the y value
@@ -175,20 +177,20 @@ var lacunarity_label: Label
 var persistence_label: Label
 
 # Helper function to create labeled control rows
-func create_control_row(text_content: String, control_text: String, text_color: Color = Color.WHITE, control_color: Color = Color.YELLOW, font_size: int = DEBUG_ITEM_FONT_SIZE) -> HBoxContainer:
+func create_control_row(text_content: String, control_text: String, font_size: int = DEBUG_ITEM_FONT_SIZE) -> HBoxContainer:
 	var container = HBoxContainer.new()
 	container.add_theme_constant_override("separation", 5)
 
 	var text_label = Label.new()
 	text_label.text = text_content
 	text_label.add_theme_font_size_override("font_size", font_size)
-	text_label.add_theme_color_override("font_color", text_color)
+	text_label.add_theme_color_override("font_color", Color.WHITE)
 	container.add_child(text_label)
 
 	var control_label = Label.new()
 	control_label.text = control_text
 	control_label.add_theme_font_size_override("font_size", font_size)
-	control_label.add_theme_color_override("font_color", control_color)
+	control_label.add_theme_color_override("font_color", Color.GREEN)
 	container.add_child(control_label)
 
 	return container
@@ -230,16 +232,13 @@ func _ready():
 	var header = Label.new()
 	header.text = "[DEBUG]"
 	header.add_theme_font_size_override("font_size", 36)
-	header.add_theme_color_override("font_color", Color.LIME_GREEN)
+	header.add_theme_color_override("font_color", Color.YELLOW)
 	debug_ui_container.add_child(header)
 
 	# Regenerate row
 	var regenerate_row = create_control_row(
 		"Regenerate noise ",
-		"[R]",
-		Color.WHITE,
-		Color.YELLOW,
-		DEBUG_ITEM_FONT_SIZE
+		"[R]"
 	)
 	debug_ui_container.add_child(regenerate_row)
 	regenerate_label = regenerate_row.get_child(0)  # Reference to update later
@@ -247,10 +246,7 @@ func _ready():
 	# Zoom row
 	var zoom_row = create_control_row(
 		"Zoom: (" + str(graph.pixels_per_unit) + "px/graph unit): " + str(graph.pixels_per_unit / 100.0),
-		"[+, -]",
-		Color.WHITE,
-		Color.YELLOW,
-		DEBUG_ITEM_FONT_SIZE
+		"[+, -]"
 	)
 	debug_ui_container.add_child(zoom_row)
 	zoom_label = zoom_row.get_child(0)  # Reference to update later
@@ -260,9 +256,6 @@ func _ready():
 	var fade_row = create_control_row(
 		"Fade function: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type],
 		"[M]",
-		Color.WHITE,
-		Color.YELLOW,
-		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(fade_row)
 	fade_label = fade_row.get_child(0)  # Reference to update later
@@ -273,14 +266,13 @@ func _ready():
 	var octaves_row = create_control_row(
 		"Octaves: " + str(perlin_noise.octaves),
 		"[O]",
-		Color.WHITE,
-		Color.YELLOW,
-		DEBUG_ITEM_FONT_SIZE
 	)
 	debug_ui_container.add_child(octaves_row)
 	octaves_label = octaves_row.get_child(0)  # Reference to update later
 	octaves_controls = octaves_row.get_child(1)
 
+	
+	
 	# base frequency slider row
 	var base_frequency_container = create_slider_row("Base Frequency: %.2f" % perlin_noise.base_frequency, 0.5, 2.0, 0.1, perlin_noise.base_frequency)
 	debug_ui_container.add_child(base_frequency_container)
@@ -377,7 +369,7 @@ func update_debug_ui():
 
 func _draw():
 	# Draw the graph axes and ticks
-	graph.draw_integer_noise_values(self)
 	graph.draw_axes(self)
 	graph.draw_ticks(self)
 	graph.draw_noise_graph(self)
+	graph.draw_integer_noise_values(self)  # Draw circles last so they appear on top
