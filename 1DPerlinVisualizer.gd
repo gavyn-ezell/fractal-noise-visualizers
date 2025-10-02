@@ -167,6 +167,8 @@ var octaves_label: Label
 var octaves_controls: Label
 
 # Sliders for noise parameters
+var base_frequency_slider: HSlider
+var base_frequency_label: Label
 var lacunarity_slider: HSlider
 var persistence_slider: HSlider
 var lacunarity_label: Label
@@ -191,8 +193,29 @@ func create_control_row(text_content: String, control_text: String, text_color: 
 
 	return container
 
+func create_slider_row(label_text: String, min_val: float, max_val: float, step: float, default_val: float, font_size: int = DEBUG_ITEM_FONT_SIZE) -> HBoxContainer:
+	var container = HBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+
+	var label = Label.new()
+	label.text = label_text
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	container.add_child(label)
+	
+	var slider = HSlider.new()
+	slider.min_value = min_val
+	slider.max_value = max_val
+	slider.step = step
+	slider.value = default_val
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.add_theme_color_override("font_color", Color.WHITE)
+	container.add_child(slider)
+	
+	return container
+
 func _ready():
-	perlin_noise = PerlinNoise.new(PerlinNoise.FadeType.SMOOTHSTEP)
+	perlin_noise = PerlinNoise.new()
 	graph = Graph.new(perlin_noise, 100.0, Vector2(100, get_viewport().size.y/2), get_viewport().size)  # 100 pixels = 1 unit
 	
 	
@@ -245,6 +268,7 @@ func _ready():
 	fade_label = fade_row.get_child(0)  # Reference to update later
 	fade_controls = fade_row.get_child(1)
 
+
 	#octaves row
 	var octaves_row = create_control_row(
 		"Octaves: " + str(perlin_noise.octaves),
@@ -257,47 +281,28 @@ func _ready():
 	octaves_label = octaves_row.get_child(0)  # Reference to update later
 	octaves_controls = octaves_row.get_child(1)
 
+	# base frequency slider row
+	var base_frequency_container = create_slider_row("Base Frequency: " + str(perlin_noise.base_frequency), 0.5, 2.0, 0.1, perlin_noise.base_frequency)
+	debug_ui_container.add_child(base_frequency_container)
+	base_frequency_label = base_frequency_container.get_child(0)
+	base_frequency_slider = base_frequency_container.get_child(1)
+	
+	
+
 	# Lacunarity slider row
-	var lacunarity_container = HBoxContainer.new()
-	lacunarity_container.add_theme_constant_override("separation", 10)
+	var lacunarity_container = create_slider_row("Lacunarity: " + str(perlin_noise.lacunarity), 0.5, 2.0, 0.1, perlin_noise.lacunarity)
 	debug_ui_container.add_child(lacunarity_container)
-
-	lacunarity_label = Label.new()
-	lacunarity_label.text = "Lacunarity: " + str(perlin_noise.lacunarity)
-	lacunarity_label.add_theme_font_size_override("font_size",DEBUG_ITEM_FONT_SIZE)
-	lacunarity_label.add_theme_color_override("font_color", Color.WHITE)
-	lacunarity_container.add_child(lacunarity_label)
-
-	lacunarity_slider = HSlider.new()
-	lacunarity_slider.min_value = 0.5
-	lacunarity_slider.max_value = 2.0
-	lacunarity_slider.step = 0.1
-	lacunarity_slider.value = perlin_noise.lacunarity
-	lacunarity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lacunarity_slider.add_theme_color_override("font_color", Color.WHITE)
-	lacunarity_container.add_child(lacunarity_slider)
+	lacunarity_label = lacunarity_container.get_child(0)
+	lacunarity_slider = lacunarity_container.get_child(1)
 
 	# Persistence slider row
-	var persistence_container = HBoxContainer.new()
-	persistence_container.add_theme_constant_override("separation", 10)
+	var persistence_container = create_slider_row("Persistence: " + str(perlin_noise.persistence), 0.0, 1.0, 0.05, perlin_noise.persistence)
 	debug_ui_container.add_child(persistence_container)
-
-	persistence_label = Label.new()
-	persistence_label.text = "Persistence: " + str(perlin_noise.persistence)
-	persistence_label.add_theme_font_size_override("font_size", DEBUG_ITEM_FONT_SIZE)
-	persistence_label.add_theme_color_override("font_color", Color.WHITE)
-	persistence_container.add_child(persistence_label)
-
-	persistence_slider = HSlider.new()
-	persistence_slider.min_value = 0.0
-	persistence_slider.max_value = 1.0
-	persistence_slider.step = 0.05
-	persistence_slider.value = perlin_noise.persistence
-	persistence_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	persistence_slider.add_theme_color_override("font_color", Color.WHITE)
-	persistence_container.add_child(persistence_slider)
+	persistence_label = persistence_container.get_child(0)
+	persistence_slider = persistence_container.get_child(1)
 
 	# Connect slider signals
+	base_frequency_slider.value_changed.connect(_on_base_frequency_changed)
 	lacunarity_slider.value_changed.connect(_on_lacunarity_changed)
 	persistence_slider.value_changed.connect(_on_persistence_changed)
 
@@ -336,6 +341,11 @@ func _input(event):
 				pass
 		print("redrawing")
 		queue_redraw()
+
+func _on_base_frequency_changed(value: float):
+	perlin_noise.base_frequency = value
+	base_frequency_label.text = "Base Frequency: " + str(value)
+	queue_redraw()
 
 func _on_lacunarity_changed(value: float):
 	perlin_noise.lacunarity = value
