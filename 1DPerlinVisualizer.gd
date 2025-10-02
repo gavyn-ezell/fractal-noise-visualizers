@@ -195,7 +195,7 @@ func create_control_row(text_content: String, control_text: String, text_color: 
 
 func create_slider_row(label_text: String, min_val: float, max_val: float, step: float, default_val: float, font_size: int = DEBUG_ITEM_FONT_SIZE) -> HBoxContainer:
 	var container = HBoxContainer.new()
-	container.add_theme_constant_override("separation", 10)
+	container.add_theme_constant_override("separation", 15)
 
 	var label = Label.new()
 	label.text = label_text
@@ -282,7 +282,7 @@ func _ready():
 	octaves_controls = octaves_row.get_child(1)
 
 	# base frequency slider row
-	var base_frequency_container = create_slider_row("Base Frequency: " + str(perlin_noise.base_frequency), 0.5, 2.0, 0.1, perlin_noise.base_frequency)
+	var base_frequency_container = create_slider_row("Base Frequency: %.2f" % perlin_noise.base_frequency, 0.5, 2.0, 0.1, perlin_noise.base_frequency)
 	debug_ui_container.add_child(base_frequency_container)
 	base_frequency_label = base_frequency_container.get_child(0)
 	base_frequency_slider = base_frequency_container.get_child(1)
@@ -290,13 +290,13 @@ func _ready():
 	
 
 	# Lacunarity slider row
-	var lacunarity_container = create_slider_row("Lacunarity: " + str(perlin_noise.lacunarity), 0.5, 2.0, 0.1, perlin_noise.lacunarity)
+	var lacunarity_container = create_slider_row("Lacunarity: %.2f" % perlin_noise.lacunarity, 0.5, 2.0, 0.1, perlin_noise.lacunarity)
 	debug_ui_container.add_child(lacunarity_container)
 	lacunarity_label = lacunarity_container.get_child(0)
 	lacunarity_slider = lacunarity_container.get_child(1)
 
 	# Persistence slider row
-	var persistence_container = create_slider_row("Persistence: " + str(perlin_noise.persistence), 0.0, 1.0, 0.05, perlin_noise.persistence)
+	var persistence_container = create_slider_row("Persistence: %.2f" % perlin_noise.persistence, 0.0, 1.0, 0.05, perlin_noise.persistence)
 	debug_ui_container.add_child(persistence_container)
 	persistence_label = persistence_container.get_child(0)
 	persistence_slider = persistence_container.get_child(1)
@@ -344,17 +344,17 @@ func _input(event):
 
 func _on_base_frequency_changed(value: float):
 	perlin_noise.base_frequency = value
-	base_frequency_label.text = "Base Frequency: " + str(value)
+	base_frequency_label.text = "Base Frequency: %.2f" % value
 	queue_redraw()
 
 func _on_lacunarity_changed(value: float):
 	perlin_noise.lacunarity = value
-	lacunarity_label.text = "Lacunarity: " + str(value)
+	lacunarity_label.text = "Lacunarity: %.2f" % value
 	queue_redraw()
 
 func _on_persistence_changed(value: float):
 	perlin_noise.persistence = value
-	persistence_label.text = "Persistence: " + str(value)
+	persistence_label.text = "Persistence: %.2f" % value
 	queue_redraw()
 
 func update_debug_ui():
@@ -368,11 +368,11 @@ func update_debug_ui():
 		octaves_label.text = "Octaves: " + str(perlin_noise.octaves)
 
 	if lacunarity_label and lacunarity_slider:
-		lacunarity_label.text = "Lacunarity: " + str(perlin_noise.lacunarity)
+		lacunarity_label.text = "Lacunarity: %.2f" % perlin_noise.lacunarity
 		lacunarity_slider.value = perlin_noise.lacunarity
 
 	if persistence_label and persistence_slider:
-		persistence_label.text = "Persistence: " + str(perlin_noise.persistence)
+		persistence_label.text = "Persistence: %.2f" % perlin_noise.persistence
 		persistence_slider.value = perlin_noise.persistence
 
 func _draw():
