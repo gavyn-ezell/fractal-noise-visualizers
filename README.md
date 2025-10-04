@@ -1,21 +1,13 @@
-# Perlin Noise Visualizer
+# Fractal Noise Visualizers
 
-Check it out [here](https://gezell.itch.io/perlin-visualizer)
+You can check the visualizers out [here](https://gezell.itch.io/fractal-noise-visualizers) (only has a 1D fractal noise visualizer right now).
 
-Implemented a simple 1D perlin noise visualizer with interactive parameter adjustments. The ability to switch between 1D, 2D,and 3D visualizations is currently being worked on and will be added in the future.
-
-# Resources
-
-[Good Article by Adrian Biagioli](https://adrianb.io/2014/08/09/perlinnoise.html)
-
-[UMD Lecture Notes](https://www.cs.umd.edu/class/fall2018/cmsc425/Lects/lect14-perlin.pdf)
-
-[Sebastian Lague Video](https://www.youtube.com/watch?v=wbpMiKiSKm8&list=PLFt_AvWsXl0eBW2EiBtl_sxmDtSgZBxB3)
-
-[Ken Perlin Code](https://mrl.cs.nyu.edu/~perlin/noise/)
+## Upcoming Features
+- Better zooming and add panning
+- 2D visualizer scene
+- 3D Visualizer scene
 
 # License
-
 ```
 
   Copyright (c) 2014-present Godot Engine contributors.
