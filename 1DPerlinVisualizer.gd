@@ -22,16 +22,20 @@ class Graph:
 		screen_size = viewport_size
 	
 	func draw_integer_noise_values(canvas: CanvasItem):
-
-		for i in range(screen_size.x / pixels_per_unit):
-			var pos = Vector2(i*pixels_per_unit, screen_size.y/2)
-			var graph_space_pos = _pixel_to_graph_space(pos)
-			var noise_value = perlin.perlin1d(graph_space_pos.x)
-			var pixel_space_pos = _graph_to_pixel_space(Vector2(graph_space_pos.x, noise_value))
-			#draw a red blue dot with y equal to noise value 
+		var left_graph_x = floor(_pixel_to_graph_space(Vector2(0, 0)).x)
+		var right_graph_x = ceil(_pixel_to_graph_space(Vector2(screen_size.x, 0)).x)
+		for i in range(int(left_graph_x), int(right_graph_x) + 1):
+			var noise_value = perlin.fractal1d(float(i))
+			var pixel_space_pos = _graph_to_pixel_space(Vector2(float(i), noise_value))
 			canvas.draw_circle(pixel_space_pos, 5, POINT_COLOR)
-		
-		
+			# print(i, " ", noise_value)
+	
+	func draw_single_noise_value(canvas: CanvasItem, x: float):
+		var noise_value = perlin.perlin1d(x)
+		var pixel_space_pos = _graph_to_pixel_space(Vector2(x, noise_value))
+		canvas.draw_circle(pixel_space_pos, 5, Color.LIME_GREEN)
+		# print(x, " ", noise_value)
+	
 	func draw_axes(canvas: CanvasItem):
 		var line_width = 3.0
 		
@@ -131,14 +135,14 @@ class Graph:
 		for i in range(0, int(screen_size.x), step_size):
 			var pos = Vector2(i, screen_size.y/2)
 			var graph_space_pos = _pixel_to_graph_space(pos)
-			var noise_value = perlin.perlin1d(graph_space_pos.x)
+			var noise_value = perlin.fractal1d(graph_space_pos.x)
 			var pixel_space_pos = _graph_to_pixel_space(Vector2(graph_space_pos.x, noise_value))
 			points.append(pixel_space_pos)
 		
 		# Draw lines connecting the points
 		for i in range(points.size() - 1):
 			canvas.draw_line(points[i], points[i + 1], CURVE_COLOR, line_width)
-
+		
 	func _pixel_to_graph_space(point: Vector2) -> Vector2:
 		# subtraction AND an sign flip of the y value
 		var result = (point - graph_origin)
@@ -158,6 +162,8 @@ class Graph:
 var perlin_noise: PerlinNoise
 var graph: Graph
 
+var show_curve: bool = true
+
 var debug_ui_container: VBoxContainer
 var regenerate_label: Label
 var regenerate_controls: Label
@@ -167,6 +173,8 @@ var fade_label: Label
 var fade_controls: Label
 var octaves_label: Label
 var octaves_controls: Label
+var curve_toggle_label: Label
+var curve_toggle_controls: Label
 
 # Sliders for noise parameters
 var base_frequency_slider: HSlider
@@ -218,7 +226,7 @@ func create_slider_row(label_text: String, min_val: float, max_val: float, step:
 
 func _ready():
 	perlin_noise = PerlinNoise.new()
-	graph = Graph.new(perlin_noise, 100.0, Vector2(100, get_viewport().size.y/2), get_viewport().size)  # 100 pixels = 1 unit
+	graph = Graph.new(perlin_noise, 100.0, Vector2(100, get_viewport().size.y/2.0), get_viewport().size)  # 100 pixels = 1 unit
 	
 	
 	
@@ -243,6 +251,16 @@ func _ready():
 	debug_ui_container.add_child(regenerate_row)
 	regenerate_label = regenerate_row.get_child(0)  # Reference to update later
 	regenerate_controls = regenerate_row.get_child(1)
+
+
+	# Curve toggle row
+	var curve_toggle_row = create_control_row(
+		"Show curve: " + ("ON" if show_curve else "OFF"),
+		"[C]"
+	)
+	debug_ui_container.add_child(curve_toggle_row)
+	curve_toggle_label = curve_toggle_row.get_child(0)
+	curve_toggle_controls = curve_toggle_row.get_child(1)
 	# Zoom row
 	var zoom_row = create_control_row(
 		"Zoom: (" + str(graph.pixels_per_unit) + "px/graph unit): " + str(graph.pixels_per_unit / 100.0),
@@ -270,8 +288,6 @@ func _ready():
 	debug_ui_container.add_child(octaves_row)
 	octaves_label = octaves_row.get_child(0)  # Reference to update later
 	octaves_controls = octaves_row.get_child(1)
-
-	
 	
 	# base frequency slider row
 	var base_frequency_container = create_slider_row("Base Frequency: %.2f" % perlin_noise.base_frequency, 0.5, 2.0, 0.1, perlin_noise.base_frequency)
@@ -329,6 +345,10 @@ func _input(event):
 					perlin_noise.octaves = 1
 				update_debug_ui()
 				print('switched octaves to ' + str(perlin_noise.octaves))
+			KEY_C:
+				show_curve = !show_curve
+				update_debug_ui()
+				print('curve display: ' + ('ON' if show_curve else 'OFF'))
 			_:
 				pass
 		print("redrawing")
@@ -358,6 +378,9 @@ func update_debug_ui():
 		fade_label.text = "Fade: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type]
 	if octaves_label and octaves_controls:
 		octaves_label.text = "Octaves: " + str(perlin_noise.octaves)
+	
+	if curve_toggle_label and curve_toggle_controls:
+		curve_toggle_label.text = "Show curve: " + ("ON" if show_curve else "OFF")
 
 	if lacunarity_label and lacunarity_slider:
 		lacunarity_label.text = "Lacunarity: %.2f" % perlin_noise.lacunarity
@@ -371,5 +394,7 @@ func _draw():
 	# Draw the graph axes and ticks
 	graph.draw_axes(self)
 	graph.draw_ticks(self)
-	graph.draw_noise_graph(self)
+	if show_curve:
+		graph.draw_noise_graph(self)
 	graph.draw_integer_noise_values(self)  # Draw circles last so they appear on top
+	#graph.draw_single_noise_value(self, 1.6)
