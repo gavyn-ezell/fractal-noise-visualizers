@@ -9,14 +9,14 @@ class Graph:
 	var GRAPH_LINE_COLOR: Color = Color("535F6E")
 	var CURVE_COLOR: Color = Color("ff0000")
 	var POINT_COLOR: Color = Color.BLUE
-	var perlin: PerlinNoise
+	var noise: FractalNoise
 	var pixels_per_unit: float
 	
 	var screen_size: Vector2
 	var graph_origin: Vector2
 	
-	func _init(pn: PerlinNoise, ppu: float, go: Vector2, viewport_size: Vector2):
-		perlin = pn
+	func _init(pn: FractalNoise, ppu: float, go: Vector2, viewport_size: Vector2):
+		noise = pn
 		pixels_per_unit = ppu
 		graph_origin = go
 		screen_size = viewport_size
@@ -25,13 +25,13 @@ class Graph:
 		var left_graph_x = floor(_pixel_to_graph_space(Vector2(0, 0)).x)
 		var right_graph_x = ceil(_pixel_to_graph_space(Vector2(screen_size.x, 0)).x)
 		for i in range(int(left_graph_x), int(right_graph_x) + 1):
-			var noise_value = perlin.fractal1d(float(i))
+			var noise_value = noise.fractal1d(float(i))
 			var pixel_space_pos = _graph_to_pixel_space(Vector2(float(i), noise_value))
 			canvas.draw_circle(pixel_space_pos, 5, POINT_COLOR)
 			# print(i, " ", noise_value)
 	
 	func draw_single_noise_value(canvas: CanvasItem, x: float):
-		var noise_value = perlin.perlin1d(x)
+		var noise_value = noise.perlin1d(x)
 		var pixel_space_pos = _graph_to_pixel_space(Vector2(x, noise_value))
 		canvas.draw_circle(pixel_space_pos, 5, Color.LIME_GREEN)
 		# print(x, " ", noise_value)
@@ -135,7 +135,7 @@ class Graph:
 		for i in range(0, int(screen_size.x), step_size):
 			var pos = Vector2(i, screen_size.y/2)
 			var graph_space_pos = _pixel_to_graph_space(pos)
-			var noise_value = perlin.fractal1d(graph_space_pos.x)
+			var noise_value = noise.fractal1d(graph_space_pos.x)
 			var pixel_space_pos = _graph_to_pixel_space(Vector2(graph_space_pos.x, noise_value))
 			points.append(pixel_space_pos)
 		
@@ -159,7 +159,7 @@ class Graph:
 		self.pixels_per_unit = new_zoom
 
 
-var perlin_noise: PerlinNoise
+var noise: FractalNoise
 var graph: Graph
 
 var show_curve: bool = true
@@ -225,8 +225,8 @@ func create_slider_row(label_text: String, min_val: float, max_val: float, step:
 	return container
 
 func _ready():
-	perlin_noise = PerlinNoise.new()
-	graph = Graph.new(perlin_noise, 100.0, Vector2(100, get_viewport().size.y/2.0), get_viewport().size)  # 100 pixels = 1 unit
+	noise = FractalNoise.new()
+	graph = Graph.new(noise, 100.0, Vector2(100, get_viewport().size.y/2.0), get_viewport().size)  # 100 pixels = 1 unit
 	
 	
 	
@@ -272,7 +272,7 @@ func _ready():
 
 	# Fade row
 	var fade_row = create_control_row(
-		"Fade function: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type],
+		"Fade function: " + FractalNoise.FadeType.keys()[noise.fade_type],
 		"[M]",
 	)
 	debug_ui_container.add_child(fade_row)
@@ -282,7 +282,7 @@ func _ready():
 
 	#octaves row
 	var octaves_row = create_control_row(
-		"Octaves: " + str(perlin_noise.octaves),
+		"Octaves: " + str(noise.octaves),
 		"[O]",
 	)
 	debug_ui_container.add_child(octaves_row)
@@ -290,7 +290,7 @@ func _ready():
 	octaves_controls = octaves_row.get_child(1)
 	
 	# base frequency slider row
-	var base_frequency_container = create_slider_row("Base Frequency: %.2f" % perlin_noise.base_frequency, 0.5, 2.0, 0.1, perlin_noise.base_frequency)
+	var base_frequency_container = create_slider_row("Base Frequency: %.2f" % noise.base_frequency, 0.5, 2.0, 0.1, noise.base_frequency)
 	debug_ui_container.add_child(base_frequency_container)
 	base_frequency_label = base_frequency_container.get_child(0)
 	base_frequency_slider = base_frequency_container.get_child(1)
@@ -298,13 +298,13 @@ func _ready():
 	
 
 	# Lacunarity slider row
-	var lacunarity_container = create_slider_row("Lacunarity: %.2f" % perlin_noise.lacunarity, 0.5, 2.0, 0.1, perlin_noise.lacunarity)
+	var lacunarity_container = create_slider_row("Lacunarity: %.2f" % noise.lacunarity, 0.5, 2.0, 0.1, noise.lacunarity)
 	debug_ui_container.add_child(lacunarity_container)
 	lacunarity_label = lacunarity_container.get_child(0)
 	lacunarity_slider = lacunarity_container.get_child(1)
 
 	# Persistence slider row
-	var persistence_container = create_slider_row("Persistence: %.2f" % perlin_noise.persistence, 0.0, 1.0, 0.05, perlin_noise.persistence)
+	var persistence_container = create_slider_row("Persistence: %.2f" % noise.persistence, 0.0, 1.0, 0.05, noise.persistence)
 	debug_ui_container.add_child(persistence_container)
 	persistence_label = persistence_container.get_child(0)
 	persistence_slider = persistence_container.get_child(1)
@@ -320,11 +320,11 @@ func _input(event):
 		match event.keycode:
 			KEY_M:
 				# circular movement switch between fade types
-				perlin_noise.fade_type = PerlinNoise.FadeType.values()[
-					(PerlinNoise.FadeType.values().find(perlin_noise.fade_type) + 1) % PerlinNoise.FadeType.values().size()
+				noise.fade_type = FractalNoise.FadeType.values()[
+					(FractalNoise.FadeType.values().find(noise.fade_type) + 1) % FractalNoise.FadeType.values().size()
 				]
 				update_debug_ui()
-				print('switched fade type to ' + str(PerlinNoise.FadeType.keys()[perlin_noise.fade_type]))
+				print('switched fade type to ' + str(FractalNoise.FadeType.keys()[noise.fade_type]))
 			KEY_EQUAL:
 				graph.pixels_per_unit = min(graph.pixels_per_unit + 50, 500)
 				update_debug_ui()
@@ -337,14 +337,14 @@ func _input(event):
 				update_debug_ui()
 				print('zoomed out to ' + str(graph.pixels_per_unit) + 'px/graph unit')
 			KEY_R:
-				perlin_noise.shuffle_p()
+				noise.shuffle_p()
 			KEY_O:
 				#circular movement switch between octaves (1-4)
-				perlin_noise.octaves += 1
-				if perlin_noise.octaves > 4:
-					perlin_noise.octaves = 1
+				noise.octaves += 1
+				if noise.octaves > 4:
+					noise.octaves = 1
 				update_debug_ui()
-				print('switched octaves to ' + str(perlin_noise.octaves))
+				print('switched octaves to ' + str(noise.octaves))
 			KEY_C:
 				show_curve = !show_curve
 				update_debug_ui()
@@ -355,17 +355,17 @@ func _input(event):
 		queue_redraw()
 
 func _on_base_frequency_changed(value: float):
-	perlin_noise.base_frequency = value
+	noise.base_frequency = value
 	base_frequency_label.text = "Base Frequency: %.2f" % value
 	queue_redraw()
 
 func _on_lacunarity_changed(value: float):
-	perlin_noise.lacunarity = value
+	noise.lacunarity = value
 	lacunarity_label.text = "Lacunarity: %.2f" % value
 	queue_redraw()
 
 func _on_persistence_changed(value: float):
-	perlin_noise.persistence = value
+	noise.persistence = value
 	persistence_label.text = "Persistence: %.2f" % value
 	queue_redraw()
 
@@ -375,20 +375,20 @@ func update_debug_ui():
 		zoom_label.text = "Zoom ("+ str(graph.pixels_per_unit) + "px/graph unit): " + str(graph.pixels_per_unit / 100.0)
 
 	if fade_label and fade_controls:
-		fade_label.text = "Fade: " + PerlinNoise.FadeType.keys()[perlin_noise.fade_type]
+		fade_label.text = "Fade: " + FractalNoise.FadeType.keys()[noise.fade_type]
 	if octaves_label and octaves_controls:
-		octaves_label.text = "Octaves: " + str(perlin_noise.octaves)
+		octaves_label.text = "Octaves: " + str(noise.octaves)
 	
 	if curve_toggle_label and curve_toggle_controls:
 		curve_toggle_label.text = "Show curve: " + ("ON" if show_curve else "OFF")
 
 	if lacunarity_label and lacunarity_slider:
-		lacunarity_label.text = "Lacunarity: %.2f" % perlin_noise.lacunarity
-		lacunarity_slider.value = perlin_noise.lacunarity
+		lacunarity_label.text = "Lacunarity: %.2f" % noise.lacunarity
+		lacunarity_slider.value = noise.lacunarity
 
 	if persistence_label and persistence_slider:
-		persistence_label.text = "Persistence: %.2f" % perlin_noise.persistence
-		persistence_slider.value = perlin_noise.persistence
+		persistence_label.text = "Persistence: %.2f" % noise.persistence
+		persistence_slider.value = noise.persistence
 
 func _draw():
 	# Draw the graph axes and ticks
